@@ -1,5 +1,7 @@
+using FluentValidation.AspNetCore;
 using School.Application;
 using School.Infrastructure;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddFluentValidationAutoValidation();
 
 var app = builder.Build();
 
