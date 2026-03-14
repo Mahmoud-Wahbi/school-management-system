@@ -1,6 +1,7 @@
 using FluentValidation.AspNetCore;
 using School.Application;
 using School.Infrastructure;
+using School.API.Middlewares;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
