@@ -49,8 +49,6 @@ public class StudentService : IStudentService
 
     public async Task<IEnumerable<StudentDto>> GetAllAsync()
     {
-        throw new Exception("Test exception");
-
         var students = await _unitOfWork.Students.GetAllAsync();
 
         return students.Select(MapToDto);
