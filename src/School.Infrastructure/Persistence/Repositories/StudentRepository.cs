@@ -15,4 +15,11 @@ public class StudentRepository : GenericRepository<Student>, IStudentRepository
     {
         return await _dbSet.AnyAsync(s => s.EnrollmentNumber == enrollmentNumber);
     }
+
+    public async Task<bool> EnrollmentNumberExistsAsync(string enrollmentNumber, Guid excludeStudentId)
+    {
+        return await _dbSet.AnyAsync(s =>
+            s.EnrollmentNumber == enrollmentNumber &&
+            s.Id != excludeStudentId);
+    }
 }

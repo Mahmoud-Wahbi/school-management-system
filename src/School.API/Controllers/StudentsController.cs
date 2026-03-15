@@ -51,4 +51,16 @@ public class StudentsController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = createdStudent.Id }, response);
     }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, UpdateStudentDto dto)
+    {
+        var updatedStudent = await _studentService.UpdateAsync(id, dto);
+
+        var response = ApiResponse<StudentDto>.SuccessResponse(
+            updatedStudent,
+            "Student updated successfully.");
+
+        return Ok(response);
+    }
 }

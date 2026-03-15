@@ -85,4 +85,40 @@ public class StudentService : IStudentService
             IsActive = student.IsActive
         };
     }
+
+    public async Task<StudentDto> UpdateAsync(Guid id, UpdateStudentDto dto)
+    {
+        var student = await _unitOfWork.Students.GetByIdAsync(id);
+
+        if (student is null)
+        {
+            throw new NotFoundException("Student not found.");
+        }
+
+        var enrollmentNumberExists = await _unitOfWork.Students
+            .EnrollmentNumberExistsAsync(dto.EnrollmentNumber, id);
+
+        if (enrollmentNumberExists)
+        {
+            throw new BadRequestException("A student with the same enrollment number already exists.");
+        }
+
+        student.FirstName = dto.FirstName;
+        student.LastName = dto.LastName;
+        student.EnrollmentNumber = dto.EnrollmentNumber;
+        student.Email = dto.Email;
+        student.PhoneNumber = dto.PhoneNumber;
+        student.DateOfBirth = dto.DateOfBirth;
+        student.Gender = dto.Gender;
+        student.Address = dto.Address;
+        student.AdmissionDate = dto.AdmissionDate;
+        student.NationalId = dto.NationalId;
+        student.IsActive = dto.IsActive;
+        student.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.Students.Update(student);
+        await _unitOfWork.SaveChangesAsync();
+
+        return MapToDto(student);
+    }
 }
