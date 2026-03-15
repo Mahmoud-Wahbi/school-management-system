@@ -63,4 +63,16 @@ public class StudentsController : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpPatch("{id:guid}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid id)
+    {
+        await _studentService.DeactivateAsync(id);
+
+        var response = ApiResponse<string>.SuccessResponse(
+            "Student deactivated successfully.");
+
+        return Ok(response);
+    }
+
 }

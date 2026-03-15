@@ -8,4 +8,5 @@ public interface IStudentService
     Task<IEnumerable<StudentDto>> GetAllAsync();
     Task<StudentDto> GetByIdAsync(Guid id);
     Task<StudentDto> UpdateAsync(Guid id, UpdateStudentDto dto);
+    Task DeactivateAsync(Guid id);
 }
