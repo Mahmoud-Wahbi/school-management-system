@@ -121,4 +121,26 @@ public class StudentService : IStudentService
 
         return MapToDto(student);
     }
+
+    public async Task DeactivateAsync(Guid id)
+    {
+        var student = await _unitOfWork.Students.GetByIdAsync(id);
+
+        if (student is null)
+        {
+            throw new NotFoundException("Student not found.");
+        }
+
+        if (!student.IsActive)
+        {
+            throw new BadRequestException("Student is already inactive.");
+        }
+
+        student.IsActive = false;
+        student.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.Students.Update(student);
+
+        await _unitOfWork.SaveChangesAsync();
+    }
 }
