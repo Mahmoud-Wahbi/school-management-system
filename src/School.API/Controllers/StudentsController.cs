@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using School.API.Common;
 using School.Application.DTOs.Students;
 using School.Application.Interfaces.Services;
 
@@ -19,7 +20,12 @@ public class StudentsController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var students = await _studentService.GetAllAsync();
-        return Ok(students);
+
+        var response = ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(
+            students,
+            "Students retrieved successfully.");
+
+        return Ok(response);
     }
 
     [HttpGet("{id:guid}")]
@@ -29,23 +35,26 @@ public class StudentsController : ControllerBase
 
         if (student is null)
         {
-            return NotFound();
+            var notFoundResponse = ApiResponse<StudentDto>.FailureResponse("Student not found.");
+            return NotFound(notFoundResponse);
         }
 
-        return Ok(student);
+        var response = ApiResponse<StudentDto>.SuccessResponse(
+            student,
+            "Student retrieved successfully.");
+
+        return Ok(response);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(CreateStudentDto dto)
     {
-        try
-        {
-            var createdStudent = await _studentService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = createdStudent.Id }, createdStudent);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var createdStudent = await _studentService.CreateAsync(dto);
+
+        var response = ApiResponse<StudentDto>.SuccessResponse(
+            createdStudent,
+            "Student created successfully.");
+
+        return CreatedAtAction(nameof(GetById), new { id = createdStudent.Id }, response);
     }
 }
