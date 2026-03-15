@@ -33,12 +33,6 @@ public class StudentsController : ControllerBase
     {
         var student = await _studentService.GetByIdAsync(id);
 
-        if (student is null)
-        {
-            var notFoundResponse = ApiResponse<StudentDto>.FailureResponse("Student not found.");
-            return NotFound(notFoundResponse);
-        }
-
         var response = ApiResponse<StudentDto>.SuccessResponse(
             student,
             "Student retrieved successfully.");

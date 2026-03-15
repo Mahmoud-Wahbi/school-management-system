@@ -2,6 +2,7 @@
 using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Domain.Entities;
+using School.Application.Exceptions;
 
 namespace School.Application.Services;
 
@@ -21,7 +22,7 @@ public class StudentService : IStudentService
 
         if (enrollmentNumberExists)
         {
-            throw new InvalidOperationException("A student with the same enrollment number already exists.");
+            throw new BadRequestException("A student with the same enrollment number already exists.");
         }
 
         var student = new Student
@@ -54,13 +55,13 @@ public class StudentService : IStudentService
         return students.Select(MapToDto);
     }
 
-    public async Task<StudentDto?> GetByIdAsync(Guid id)
+    public async Task<StudentDto> GetByIdAsync(Guid id)
     {
         var student = await _unitOfWork.Students.GetByIdAsync(id);
 
         if (student is null)
         {
-            return null;
+            throw new NotFoundException("Student not found.");
         }
 
         return MapToDto(student);
