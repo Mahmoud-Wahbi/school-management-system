@@ -13,4 +13,8 @@ public class StudentQueryParameters
     public bool? IsActive { get; set; }
 
     public Gender? Gender { get; set; }
+
+    public string? SortBy { get; set; }
+
+    public bool Desc { get; set; }
 }

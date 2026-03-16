@@ -78,11 +78,28 @@ public class StudentService : IStudentService
 
         var totalCount = await query.CountAsync();
 
+        // Sorting
+        query = queryParameters.SortBy?.ToLower() switch
+        {
+            "firstname" => queryParameters.Desc
+                ? query.OrderByDescending(s => s.FirstName)
+                : query.OrderBy(s => s.FirstName),
+
+            "lastname" => queryParameters.Desc
+                ? query.OrderByDescending(s => s.LastName)
+                : query.OrderBy(s => s.LastName),
+
+            "createdat" => queryParameters.Desc
+                ? query.OrderByDescending(s => s.CreatedAt)
+                : query.OrderBy(s => s.CreatedAt),
+
+            _ => query.OrderBy(s => s.CreatedAt)
+        };
+
         var students = await query
-            .OrderBy(s => s.CreatedAt)
-            .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
-            .Take(queryParameters.PageSize)
-            .ToListAsync();
+        .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
+        .Take(queryParameters.PageSize)
+        .ToListAsync();
 
         var studentDtos = students.Select(MapToDto);
 
