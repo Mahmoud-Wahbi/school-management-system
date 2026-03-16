@@ -50,7 +50,7 @@ public class StudentService : IStudentService
         return MapToDto(student);
     }
 
-    public async Task<PagedResult<StudentDto>> GetAllAsync(int page, int pageSize)
+    public async Task<PagedResult<StudentDto>> GetAllAsync(StudentQueryParameters queryParameters)
     {
         var query = _unitOfWork.Students.GetQueryable();
 
@@ -58,8 +58,8 @@ public class StudentService : IStudentService
 
         var students = await query
             .OrderBy(s => s.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
+            .Take(queryParameters.PageSize)
             .ToListAsync();
 
         var studentDtos = students.Select(MapToDto);
@@ -67,12 +67,11 @@ public class StudentService : IStudentService
         return new PagedResult<StudentDto>
         {
             Items = studentDtos,
-            Page = page,
-            PageSize = pageSize,
+            Page = queryParameters.Page,
+            PageSize = queryParameters.PageSize,
             TotalCount = totalCount
         };
     }
-
     public async Task<StudentDto> GetByIdAsync(Guid id)
     {
         var student = await _unitOfWork.Students.GetByIdAsync(id);

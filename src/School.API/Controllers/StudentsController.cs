@@ -18,11 +18,9 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(
-    [FromQuery] int page = 1,
-    [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetAll([FromQuery] StudentQueryParameters queryParameters)
     {
-        var students = await _studentService.GetAllAsync(page, pageSize);
+        var students = await _studentService.GetAllAsync(queryParameters);
 
         var response = ApiResponse<PagedResult<StudentDto>>.SuccessResponse(
             students,
