@@ -1,20 +1,23 @@
-﻿using School.Application.Common;
+﻿using Microsoft.EntityFrameworkCore;
+using School.Application.Common;
+using School.Application.Common.Cache;
 using School.Application.DTOs.Students;
 using School.Application.Exceptions;
 using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace School.Application.Services;
 
 public class StudentService : IStudentService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
 
-    public StudentService(IUnitOfWork unitOfWork)
+    public StudentService(IUnitOfWork unitOfWork, ICacheService cacheService)
     {
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
     }
 
     public async Task<StudentDto> CreateAsync(CreateStudentDto dto)
@@ -46,15 +49,30 @@ public class StudentService : IStudentService
 
         await _unitOfWork.Students.AddAsync(student);
         await _unitOfWork.SaveChangesAsync();
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
 
         return MapToDto(student);
     }
 
     public async Task<PagedResult<StudentDto>> GetAllAsync(StudentQueryParameters queryParameters)
     {
+        var cacheKey = CacheKeys.StudentsList(
+            queryParameters.Page,
+            queryParameters.PageSize,
+            queryParameters.Name,
+            queryParameters.IsActive,
+            queryParameters.Gender?.ToString(),
+            queryParameters.SortBy,
+            queryParameters.Desc);
+
+        var cachedResult = await _cacheService.GetAsync<PagedResult<StudentDto>>(cacheKey);
+        if (cachedResult is not null)
+        {
+            return cachedResult;
+        }
+
         var query = _unitOfWork.Students.GetQueryable();
 
-        // Filtering by Name
         if (!string.IsNullOrWhiteSpace(queryParameters.Name))
         {
             var name = queryParameters.Name.ToLower();
@@ -64,13 +82,11 @@ public class StudentService : IStudentService
                 s.LastName.ToLower().Contains(name));
         }
 
-        // Filtering by IsActive
         if (queryParameters.IsActive.HasValue)
         {
             query = query.Where(s => s.IsActive == queryParameters.IsActive.Value);
         }
 
-        // Filtering by Gender
         if (queryParameters.Gender.HasValue)
         {
             query = query.Where(s => s.Gender == queryParameters.Gender.Value);
@@ -78,7 +94,6 @@ public class StudentService : IStudentService
 
         var totalCount = await query.CountAsync();
 
-        // Sorting
         query = queryParameters.SortBy?.ToLower() switch
         {
             "firstname" => queryParameters.Desc
@@ -97,22 +112,32 @@ public class StudentService : IStudentService
         };
 
         var students = await query
-        .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
-        .Take(queryParameters.PageSize)
-        .ToListAsync();
+            .Skip((queryParameters.Page - 1) * queryParameters.PageSize)
+            .Take(queryParameters.PageSize)
+            .ToListAsync();
 
-        var studentDtos = students.Select(MapToDto);
-
-        return new PagedResult<StudentDto>
+        var result = new PagedResult<StudentDto>
         {
-            Items = studentDtos,
+            Items = students.Select(MapToDto),
             Page = queryParameters.Page,
             PageSize = queryParameters.PageSize,
             TotalCount = totalCount
         };
+
+        await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(2));
+
+        return result;
     }
     public async Task<StudentDto> GetByIdAsync(Guid id)
     {
+        var cacheKey = CacheKeys.StudentById(id);
+
+        var cachedStudent = await _cacheService.GetAsync<StudentDto>(cacheKey);
+        if (cachedStudent is not null)
+        {
+            return cachedStudent;
+        }
+
         var student = await _unitOfWork.Students.GetByIdAsync(id);
 
         if (student is null)
@@ -120,10 +145,13 @@ public class StudentService : IStudentService
             throw new NotFoundException("Student not found.");
         }
 
-        return MapToDto(student);
+        var studentDto = MapToDto(student);
+
+        await _cacheService.SetAsync(cacheKey, studentDto, TimeSpan.FromMinutes(5));
+
+        return studentDto;
     }
 
-   
     public async Task<StudentDto> UpdateAsync(Guid id, UpdateStudentDto dto)
     {
         var student = await _unitOfWork.Students.GetByIdAsync(id);
@@ -156,6 +184,8 @@ public class StudentService : IStudentService
 
         _unitOfWork.Students.Update(student);
         await _unitOfWork.SaveChangesAsync();
+        await _cacheService.RemoveAsync(CacheKeys.StudentById(id));
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
 
         return MapToDto(student);
     }
@@ -180,6 +210,8 @@ public class StudentService : IStudentService
         _unitOfWork.Students.Update(student);
 
         await _unitOfWork.SaveChangesAsync();
+        await _cacheService.RemoveAsync(CacheKeys.StudentById(id));
+        await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
     }
 
     private static StudentDto MapToDto(Student student)
