@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using School.API.Common;
+using School.Application.Common;
 using School.Application.DTOs.Students;
 using School.Application.Interfaces.Services;
 
@@ -17,13 +18,15 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
     {
-        var students = await _studentService.GetAllAsync();
+        var students = await _studentService.GetAllAsync(page, pageSize);
 
-        var response = ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(
+        var response = ApiResponse<PagedResult<StudentDto>>.SuccessResponse(
             students,
-            "Students retrieved successfully.");
+            "Students retrieved successfully");
 
         return Ok(response);
     }

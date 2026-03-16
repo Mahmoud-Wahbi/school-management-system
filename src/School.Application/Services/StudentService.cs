@@ -1,8 +1,10 @@
-﻿using School.Application.DTOs.Students;
+﻿using School.Application.Common;
+using School.Application.DTOs.Students;
+using School.Application.Exceptions;
 using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Domain.Entities;
-using School.Application.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace School.Application.Services;
 
@@ -48,11 +50,27 @@ public class StudentService : IStudentService
         return MapToDto(student);
     }
 
-    public async Task<IEnumerable<StudentDto>> GetAllAsync()
+    public async Task<PagedResult<StudentDto>> GetAllAsync(int page, int pageSize)
     {
-        var students = await _unitOfWork.Students.GetAllAsync();
+        var query = _unitOfWork.Students.GetQueryable();
 
-        return students.Select(MapToDto);
+        var totalCount = await query.CountAsync();
+
+        var students = await query
+            .OrderBy(s => s.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var studentDtos = students.Select(MapToDto);
+
+        return new PagedResult<StudentDto>
+        {
+            Items = studentDtos,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<StudentDto> GetByIdAsync(Guid id)
@@ -67,25 +85,7 @@ public class StudentService : IStudentService
         return MapToDto(student);
     }
 
-    private static StudentDto MapToDto(Student student)
-    {
-        return new StudentDto
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            EnrollmentNumber = student.EnrollmentNumber,
-            Email = student.Email,
-            PhoneNumber = student.PhoneNumber,
-            DateOfBirth = student.DateOfBirth,
-            Gender = student.Gender,
-            Address = student.Address,
-            AdmissionDate = student.AdmissionDate,
-            NationalId = student.NationalId,
-            IsActive = student.IsActive
-        };
-    }
-
+   
     public async Task<StudentDto> UpdateAsync(Guid id, UpdateStudentDto dto)
     {
         var student = await _unitOfWork.Students.GetByIdAsync(id);
@@ -143,4 +143,24 @@ public class StudentService : IStudentService
 
         await _unitOfWork.SaveChangesAsync();
     }
+
+    private static StudentDto MapToDto(Student student)
+    {
+        return new StudentDto
+        {
+            Id = student.Id,
+            FirstName = student.FirstName,
+            LastName = student.LastName,
+            EnrollmentNumber = student.EnrollmentNumber,
+            Email = student.Email,
+            PhoneNumber = student.PhoneNumber,
+            DateOfBirth = student.DateOfBirth,
+            Gender = student.Gender,
+            Address = student.Address,
+            AdmissionDate = student.AdmissionDate,
+            NationalId = student.NationalId,
+            IsActive = student.IsActive
+        };
+    }
 }
+
