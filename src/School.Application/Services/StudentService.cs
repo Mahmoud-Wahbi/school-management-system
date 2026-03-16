@@ -54,6 +54,28 @@ public class StudentService : IStudentService
     {
         var query = _unitOfWork.Students.GetQueryable();
 
+        // Filtering by Name
+        if (!string.IsNullOrWhiteSpace(queryParameters.Name))
+        {
+            var name = queryParameters.Name.ToLower();
+
+            query = query.Where(s =>
+                s.FirstName.ToLower().Contains(name) ||
+                s.LastName.ToLower().Contains(name));
+        }
+
+        // Filtering by IsActive
+        if (queryParameters.IsActive.HasValue)
+        {
+            query = query.Where(s => s.IsActive == queryParameters.IsActive.Value);
+        }
+
+        // Filtering by Gender
+        if (queryParameters.Gender.HasValue)
+        {
+            query = query.Where(s => s.Gender == queryParameters.Gender.Value);
+        }
+
         var totalCount = await query.CountAsync();
 
         var students = await query
