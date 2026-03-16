@@ -16,5 +16,10 @@ public class StudentQueryParametersValidator : AbstractValidator<StudentQueryPar
             .WithMessage("PageSize must be greater than 0.")
             .LessThanOrEqualTo(100)
             .WithMessage("PageSize must not exceed 100.");
+
+        RuleFor(x => x.Name)
+        .MaximumLength(100)
+        .When(x => !string.IsNullOrWhiteSpace(x.Name));
+
     }
 }
