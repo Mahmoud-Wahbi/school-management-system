@@ -5,6 +5,7 @@ using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Infrastructure.Persistence.Context;
 using School.Infrastructure.Persistence.UnitOfWork;
+using School.Infrastructure.Security;
 using School.Infrastructure.Services;
 
 namespace School.Infrastructure;
@@ -23,6 +24,8 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICacheService, MemoryCacheService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<ITokenService, JwtTokenService>();
 
         return services;
     }
