@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using School.API.Common;
 using School.Application.Common;
 using School.Application.DTOs.Students;
@@ -65,6 +66,7 @@ public class StudentsController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPatch("{id:guid}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
