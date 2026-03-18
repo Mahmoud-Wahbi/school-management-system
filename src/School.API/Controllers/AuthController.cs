@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using School.Application.DTOs.Auth;
 using School.Application.Interfaces.Services;
 using School.API.Common;
+using School.Application.Interfaces.Common;
 
 namespace School.API.Controllers;
 
@@ -12,9 +13,14 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
 
-    public AuthController(IAuthService authService)
+    private readonly ICurrentUserService _currentUser;
+
+    public AuthController(
+        IAuthService authService,
+        ICurrentUserService currentUser)
     {
         _authService = authService;
+        _currentUser = currentUser;
     }
 
     [AllowAnonymous]
@@ -26,5 +32,19 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<LoginResponseDto>.SuccessResponse(
             result,
             "Login successful."));
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult GetCurrentUser()
+    {
+        return Ok(new
+        {
+            UserId = _currentUser.UserId,
+            Email = _currentUser.Email,
+            FullName = _currentUser.FullName,
+            Roles = _currentUser.Roles,
+            IsAuthenticated = _currentUser.IsAuthenticated
+        });
     }
 }

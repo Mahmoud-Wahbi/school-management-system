@@ -2,15 +2,18 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
+using School.API;
 using School.API.Extensions;
 using School.API.Middlewares;
+using School.API.Services;
 using School.Application;
+using School.Application.Interfaces.Common;
 using School.Infrastructure;
 using School.Infrastructure.Persistence.Context;
 using School.Infrastructure.Persistence.Seed;
 using School.Infrastructure.Security;
 using System.Text;
-using Microsoft.OpenApi.Models;
 
 
 
@@ -49,8 +52,9 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddJwtAuthentication(builder.Configuration);
-
 builder.Services.AddAuthorization();
+builder.Services.AddApiServices();
+
 
 var app = builder.Build();
 
