@@ -15,12 +15,18 @@ public class StudentService : IStudentService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IStudentAuthorizationService _studentAuthorizationService;
 
-    public StudentService(IUnitOfWork unitOfWork, ICacheService cacheService , ICurrentUserService currentUserService)
+    public StudentService(
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService,
+        ICurrentUserService currentUserService,
+        IStudentAuthorizationService studentAuthorizationService)
     {
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
         _currentUserService = currentUserService;
+        _studentAuthorizationService = studentAuthorizationService;
     }
 
     public async Task<StudentDto> CreateAsync(CreateStudentDto dto)
@@ -65,7 +71,22 @@ public class StudentService : IStudentService
 
     public async Task<PagedResult<StudentDto>> GetAllAsync(StudentQueryParameters queryParameters)
     {
+        var query = _unitOfWork.Students.GetQueryable();
+
+        if (!_currentUserService.IsInRole("Admin"))
+        {
+            if (!_currentUserService.UserId.HasValue)
+                throw new ForbiddenException("Unauthorized.");
+
+            query = query.Where(s => s.OwnerUserId == _currentUserService.UserId.Value);
+        }
+
+        var currentUserId = _currentUserService.IsInRole("Admin")
+            ? "admin"
+            : _currentUserService.UserId!.Value.ToString();
+
         var cacheKey = CacheKeys.StudentsList(
+            currentUserId,
             queryParameters.Page,
             queryParameters.PageSize,
             queryParameters.Name,
@@ -76,30 +97,21 @@ public class StudentService : IStudentService
 
         var cachedResult = await _cacheService.GetAsync<PagedResult<StudentDto>>(cacheKey);
         if (cachedResult is not null)
-        {
             return cachedResult;
-        }
-
-        var query = _unitOfWork.Students.GetQueryable();
 
         if (!string.IsNullOrWhiteSpace(queryParameters.Name))
         {
             var name = queryParameters.Name.ToLower();
-
             query = query.Where(s =>
                 s.FirstName.ToLower().Contains(name) ||
                 s.LastName.ToLower().Contains(name));
         }
 
         if (queryParameters.IsActive.HasValue)
-        {
             query = query.Where(s => s.IsActive == queryParameters.IsActive.Value);
-        }
 
         if (queryParameters.Gender.HasValue)
-        {
             query = query.Where(s => s.Gender == queryParameters.Gender.Value);
-        }
 
         var totalCount = await query.CountAsync();
 
@@ -108,15 +120,12 @@ public class StudentService : IStudentService
             "firstname" => queryParameters.Desc
                 ? query.OrderByDescending(s => s.FirstName)
                 : query.OrderBy(s => s.FirstName),
-
             "lastname" => queryParameters.Desc
                 ? query.OrderByDescending(s => s.LastName)
                 : query.OrderBy(s => s.LastName),
-
             "createdat" => queryParameters.Desc
                 ? query.OrderByDescending(s => s.CreatedAt)
                 : query.OrderBy(s => s.CreatedAt),
-
             _ => query.OrderBy(s => s.CreatedAt)
         };
 
@@ -137,6 +146,7 @@ public class StudentService : IStudentService
 
         return result;
     }
+
     public async Task<StudentDto> GetByIdAsync(Guid id)
     {
         var cacheKey = CacheKeys.StudentById(id);
@@ -154,7 +164,7 @@ public class StudentService : IStudentService
             throw new NotFoundException("Student not found.");
         }
 
-        EnsureCanAccessStudent(student);
+        await _studentAuthorizationService.EnsureCanAccessAsync(student);
 
         var studentDto = MapToDto(student);
 
@@ -172,7 +182,7 @@ public class StudentService : IStudentService
             throw new NotFoundException("Student not found.");
         }
 
-        EnsureCanAccessStudent(student);
+        await _studentAuthorizationService.EnsureCanAccessAsync(student);
 
         var enrollmentNumberExists = await _unitOfWork.Students
             .EnrollmentNumberExistsAsync(dto.EnrollmentNumber, id);
@@ -212,7 +222,7 @@ public class StudentService : IStudentService
             throw new NotFoundException("Student not found.");
         }
 
-        EnsureCanAccessStudent(student);
+        await _studentAuthorizationService.EnsureCanAccessAsync(student);
 
         if (!student.IsActive)
         {
@@ -229,17 +239,7 @@ public class StudentService : IStudentService
         await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
     }
 
-    private void EnsureCanAccessStudent(Student student)
-    {
-        if (_currentUserService.IsInRole("Admin"))
-            return;
-
-        if (!_currentUserService.UserId.HasValue || student.OwnerUserId != _currentUserService.UserId.Value)
-        {
-            throw new ForbiddenException("You are not allowed to access this student.");
-        }
-    }
-
+   
     private static StudentDto MapToDto(Student student)
     {
         return new StudentDto

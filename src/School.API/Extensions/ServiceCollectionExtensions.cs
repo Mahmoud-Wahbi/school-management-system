@@ -1,7 +1,10 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using School.API.Authorization.Policies;
+using School.API.Authorization.Requirements;
 using School.Infrastructure.Security;
+using System.Text;
 
 namespace School.API.Extensions;
 
@@ -41,7 +44,14 @@ public static class ServiceCollectionExtensions
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(PolicyNames.StudentAccess, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new StudentAccessRequirement());
+            });
+        });
 
         return services;
     }

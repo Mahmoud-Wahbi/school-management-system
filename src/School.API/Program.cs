@@ -1,21 +1,12 @@
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using School.API;
 using School.API.Extensions;
 using School.API.Middlewares;
-using School.API.Services;
 using School.Application;
-using School.Application.Interfaces.Common;
 using School.Infrastructure;
 using School.Infrastructure.Persistence.Context;
 using School.Infrastructure.Persistence.Seed;
-using School.Infrastructure.Security;
-using System.Text;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +23,6 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "Enter your JWT token"
     });
-
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -48,12 +38,12 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddAuthorization();
+builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddApiServices();
-
 
 var app = builder.Build();
 
@@ -70,13 +60,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
