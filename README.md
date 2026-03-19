@@ -20,7 +20,7 @@ This project follows Clean Architecture principles to ensure scalability, mainta
 
 ## Database Schema
 
-<img width="1511" height="1141" alt="Image" src="https://github.com/user-attachments/assets/033d7055-33a6-4253-841a-4acf3f6b9618" />
+<img width="1511" height="1141" alt="Image" src="https://github.com/user-attachments/assets/f6e4377a-a269-4dd1-8387-8075eaf8c45b" />
 
 ## Author
 Mahmoud Wahbi
