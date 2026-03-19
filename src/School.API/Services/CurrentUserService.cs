@@ -32,6 +32,9 @@ public class CurrentUserService : ICurrentUserService
     public bool IsAuthenticated =>
         User?.Identity?.IsAuthenticated ?? false;
 
+    public bool IsInRole(string role) =>
+    Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
+
     public List<string> Roles =>
         User?.FindAll(ClaimTypes.Role)
             .Select(r => r.Value)

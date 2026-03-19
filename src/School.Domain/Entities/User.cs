@@ -10,6 +10,7 @@ public class User : BaseEntity
     public bool IsActive { get; set; }
     public DateTime? LastLoginAt { get; set; }
 
+    public ICollection<Student> OwnedStudents { get; set; } = new List<Student>();
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public Teacher? Teacher { get; set; }
 }

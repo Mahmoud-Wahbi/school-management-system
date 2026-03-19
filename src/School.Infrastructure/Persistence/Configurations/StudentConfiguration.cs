@@ -44,5 +44,13 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .IsRequired();
 
         builder.Property(s => s.UpdatedAt);
+
+        builder.Property(s => s.OwnerUserId)
+       .IsRequired();
+
+        builder.HasOne(s => s.OwnerUser)
+            .WithMany(u => u.OwnedStudents)
+            .HasForeignKey(s => s.OwnerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

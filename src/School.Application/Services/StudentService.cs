@@ -3,6 +3,7 @@ using School.Application.Common;
 using School.Application.Common.Cache;
 using School.Application.DTOs.Students;
 using School.Application.Exceptions;
+using School.Application.Interfaces.Common;
 using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Domain.Entities;
@@ -13,11 +14,13 @@ public class StudentService : IStudentService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
+    private readonly ICurrentUserService _currentUserService;
 
-    public StudentService(IUnitOfWork unitOfWork, ICacheService cacheService)
+    public StudentService(IUnitOfWork unitOfWork, ICacheService cacheService , ICurrentUserService currentUserService)
     {
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
+        _currentUserService = currentUserService;
     }
 
     public async Task<StudentDto> CreateAsync(CreateStudentDto dto)
@@ -28,6 +31,11 @@ public class StudentService : IStudentService
         if (enrollmentNumberExists)
         {
             throw new BadRequestException("A student with the same enrollment number already exists.");
+        }
+
+        if (!_currentUserService.IsAuthenticated || !_currentUserService.UserId.HasValue)
+        {
+            throw new ForbiddenException("You are not authorized to create a student.");
         }
 
         var student = new Student
@@ -44,7 +52,8 @@ public class StudentService : IStudentService
             AdmissionDate = dto.AdmissionDate,
             NationalId = dto.NationalId,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            OwnerUserId = _currentUserService.UserId.Value
         };
 
         await _unitOfWork.Students.AddAsync(student);
@@ -145,6 +154,8 @@ public class StudentService : IStudentService
             throw new NotFoundException("Student not found.");
         }
 
+        EnsureCanAccessStudent(student);
+
         var studentDto = MapToDto(student);
 
         await _cacheService.SetAsync(cacheKey, studentDto, TimeSpan.FromMinutes(5));
@@ -160,6 +171,8 @@ public class StudentService : IStudentService
         {
             throw new NotFoundException("Student not found.");
         }
+
+        EnsureCanAccessStudent(student);
 
         var enrollmentNumberExists = await _unitOfWork.Students
             .EnrollmentNumberExistsAsync(dto.EnrollmentNumber, id);
@@ -199,6 +212,8 @@ public class StudentService : IStudentService
             throw new NotFoundException("Student not found.");
         }
 
+        EnsureCanAccessStudent(student);
+
         if (!student.IsActive)
         {
             throw new BadRequestException("Student is already inactive.");
@@ -212,6 +227,17 @@ public class StudentService : IStudentService
         await _unitOfWork.SaveChangesAsync();
         await _cacheService.RemoveAsync(CacheKeys.StudentById(id));
         await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
+    }
+
+    private void EnsureCanAccessStudent(Student student)
+    {
+        if (_currentUserService.IsInRole("Admin"))
+            return;
+
+        if (!_currentUserService.UserId.HasValue || student.OwnerUserId != _currentUserService.UserId.Value)
+        {
+            throw new ForbiddenException("You are not allowed to access this student.");
+        }
     }
 
     private static StudentDto MapToDto(Student student)

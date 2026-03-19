@@ -1,6 +1,6 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using School.API.Common;
 using School.Application.Exceptions;
+using System.Net;
 
 namespace School.API.Middlewares;
 
@@ -26,32 +26,33 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception occurred.");
-
             await HandleExceptionAsync(context, ex);
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = "application/json";
 
         var statusCode = exception switch
         {
             BadRequestException => (int)HttpStatusCode.BadRequest,
             NotFoundException => (int)HttpStatusCode.NotFound,
+            ForbiddenException => (int)HttpStatusCode.Forbidden,
             _ => (int)HttpStatusCode.InternalServerError
         };
 
-        context.Response.StatusCode = statusCode;
-
-        var response = new
+        var message = exception switch
         {
-            status = statusCode,
-            message = exception.Message
+            BadRequestException => exception.Message,
+            NotFoundException => exception.Message,
+            ForbiddenException => exception.Message,
+            _ => "An unexpected error occurred."  
         };
 
-        var json = JsonSerializer.Serialize(response);
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = statusCode;
 
-        await context.Response.WriteAsync(json);
+        var response = ApiResponse<string>.FailureResponse(message);
+        return context.Response.WriteAsJsonAsync(response);
     }
 }
