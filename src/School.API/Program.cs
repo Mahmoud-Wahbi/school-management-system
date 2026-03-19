@@ -51,7 +51,6 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddApiServices();
 
