@@ -17,5 +17,8 @@ public class Student : BaseEntity
     public string? NationalId { get; set; }
     public bool IsActive { get; set; }
 
+    public Guid OwnerUserId { get; set; }
+    public User OwnerUser { get; set; } = null!;
+
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 }
