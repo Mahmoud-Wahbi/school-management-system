@@ -18,7 +18,7 @@ The goal of this project is to build a well-structured and maintainable system f
 ## Architecture
 This project follows Clean Architecture principles to ensure scalability, maintainability, and separation of concerns.
 
-## Database Schema
+## Initial Database Schema
 
 <img width="1511" height="1141" alt="Image" src="https://github.com/user-attachments/assets/8def0206-8d45-4697-aff7-3452a1f20cee" />
 
