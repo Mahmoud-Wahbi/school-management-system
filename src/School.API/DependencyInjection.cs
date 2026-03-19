@@ -1,5 +1,7 @@
-﻿using School.Application.Interfaces.Common;
+﻿using Microsoft.AspNetCore.Authorization;
+using School.API.Authorization.Handlers;
 using School.API.Services;
+using School.Application.Interfaces.Common;
 
 namespace School.API;
 
@@ -12,6 +14,11 @@ public static class DependencyInjection
 
         // Current user service (reads claims from HttpContext.User)
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddScoped<IAuthorizationHandler, StudentAccessHandler>();
+
+        services.AddScoped<IStudentAuthorizationService, StudentAuthorizationService>();
+
 
         return services;
     }

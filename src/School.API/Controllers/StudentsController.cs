@@ -9,6 +9,7 @@ namespace School.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] 
 public class StudentsController : ControllerBase
 {
     private readonly IStudentService _studentService;
@@ -22,11 +23,9 @@ public class StudentsController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] StudentQueryParameters queryParameters)
     {
         var students = await _studentService.GetAllAsync(queryParameters);
-
         var response = ApiResponse<PagedResult<StudentDto>>.SuccessResponse(
             students,
             "Students retrieved successfully");
-
         return Ok(response);
     }
 
@@ -34,11 +33,9 @@ public class StudentsController : ControllerBase
     public async Task<IActionResult> GetById(Guid id)
     {
         var student = await _studentService.GetByIdAsync(id);
-
         var response = ApiResponse<StudentDto>.SuccessResponse(
             student,
             "Student retrieved successfully.");
-
         return Ok(response);
     }
 
@@ -46,11 +43,9 @@ public class StudentsController : ControllerBase
     public async Task<IActionResult> Create(CreateStudentDto dto)
     {
         var createdStudent = await _studentService.CreateAsync(dto);
-
         var response = ApiResponse<StudentDto>.SuccessResponse(
             createdStudent,
             "Student created successfully.");
-
         return CreatedAtAction(nameof(GetById), new { id = createdStudent.Id }, response);
     }
 
@@ -58,24 +53,18 @@ public class StudentsController : ControllerBase
     public async Task<IActionResult> Update(Guid id, UpdateStudentDto dto)
     {
         var updatedStudent = await _studentService.UpdateAsync(id, dto);
-
         var response = ApiResponse<StudentDto>.SuccessResponse(
             updatedStudent,
             "Student updated successfully.");
-
         return Ok(response);
     }
 
-    [Authorize(Roles = "Admin")]
     [HttpPatch("{id:guid}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
         await _studentService.DeactivateAsync(id);
-
         var response = ApiResponse<string>.SuccessResponse(
             "Student deactivated successfully.");
-
         return Ok(response);
     }
-
 }
