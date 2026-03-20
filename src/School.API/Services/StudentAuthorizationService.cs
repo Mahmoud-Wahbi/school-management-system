@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using School.API.Authorization.Policies;
 using School.Application.Exceptions;
 using School.Application.Interfaces.Common;
 using School.Domain.Entities;
@@ -30,7 +31,7 @@ public class StudentAuthorizationService : IStudentAuthorizationService
         var result = await _authorizationService.AuthorizeAsync(
             user,
             student,
-            "StudentAccess");
+            PolicyNames.StudentAccess);
 
         if (!result.Succeeded)
         {
