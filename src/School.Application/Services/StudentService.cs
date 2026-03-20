@@ -58,7 +58,6 @@ public class StudentService : IStudentService
             AdmissionDate = dto.AdmissionDate,
             NationalId = dto.NationalId,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
             OwnerUserId = _currentUserService.UserId.Value
         };
 
@@ -203,7 +202,6 @@ public class StudentService : IStudentService
         student.AdmissionDate = dto.AdmissionDate;
         student.NationalId = dto.NationalId;
         student.IsActive = dto.IsActive;
-        student.UpdatedAt = DateTime.UtcNow;
 
         _unitOfWork.Students.Update(student);
         await _unitOfWork.SaveChangesAsync();
@@ -230,7 +228,6 @@ public class StudentService : IStudentService
         }
 
         student.IsActive = false;
-        student.UpdatedAt = DateTime.UtcNow;
 
         _unitOfWork.Students.Update(student);
 
