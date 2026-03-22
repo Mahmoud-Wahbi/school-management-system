@@ -12,5 +12,6 @@ public class User : BaseEntity
 
     public ICollection<Student> OwnedStudents { get; set; } = new List<Student>();
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public Teacher? Teacher { get; set; }
 }
