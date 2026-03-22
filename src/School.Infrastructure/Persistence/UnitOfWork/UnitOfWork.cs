@@ -10,12 +10,14 @@ public class UnitOfWork : IUnitOfWork
 
     public IStudentRepository Students { get; }
     public IUserRepository Users { get; }
+    public IRefreshTokenRepository RefreshTokens { get; }
 
     public UnitOfWork(SchoolDbContext context)
     {
         _context = context;
         Students = new StudentRepository(_context);
         Users = new UserRepository(_context);
+        RefreshTokens = new RefreshTokenRepository(_context);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

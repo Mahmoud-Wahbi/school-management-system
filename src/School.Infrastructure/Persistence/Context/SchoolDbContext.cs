@@ -69,5 +69,6 @@ public class SchoolDbContext : DbContext
     public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
     public DbSet<ClassRoom> ClassRooms => Set<ClassRoom>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<ClassRoomSubjectTeacher> ClassRoomSubjectTeachers => Set<ClassRoomSubjectTeacher>();
 }
