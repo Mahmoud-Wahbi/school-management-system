@@ -93,5 +93,32 @@ public static class DbInitializer
 
             await context.SaveChangesAsync();
         }
+
+        //seed teacher2
+        if (!await context.Users.AnyAsync(u => u.Email == "teacher2@school.com"))
+        {
+            var teacher2User = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Teacher Two",
+                Email = "teacher2@school.com",
+                PasswordHash = passwordHasher.Hash("Teacher2@123"),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await context.Users.AddAsync(teacher2User);
+            await context.SaveChangesAsync();
+
+            var teacherRole = await context.Roles.FirstAsync(r => r.Name == "Teacher");
+
+            await context.UserRoles.AddAsync(new UserRole
+            {
+                UserId = teacher2User.Id,
+                RoleId = teacherRole.Id
+            });
+
+            await context.SaveChangesAsync();
+        }
     }
 }

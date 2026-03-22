@@ -4,6 +4,7 @@ using School.Application.Exceptions;
 using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace School.Application.Services;
 
@@ -13,18 +14,20 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
     private readonly IRefreshTokenGenerator _refreshTokenGenerator;
-
+    private readonly ILogger<AuthService> _logger;
     public AuthService(
         IUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
-        IRefreshTokenGenerator refreshTokenGenerator
+        IRefreshTokenGenerator refreshTokenGenerator,
+        ILogger<AuthService> logger
         )
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
         _refreshTokenGenerator = refreshTokenGenerator;
+        _logger = logger;
     }
 
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
@@ -38,11 +41,13 @@ public class AuthService : IAuthService
 
         if (user is null)
         {
+            _logger.LogWarning("Login failed. User not found for email: {Email}", request.Email);
             throw new BadRequestException("Invalid email or password.");
         }
 
         if (!user.IsActive)
         {
+            _logger.LogWarning("Login failed. Inactive account for email: {Email}", request.Email);
             throw new BadRequestException("This user account is inactive.");
         }
 
@@ -50,6 +55,7 @@ public class AuthService : IAuthService
 
         if (!isPasswordValid)
         {
+            _logger.LogWarning("Login failed. Invalid password for email: {Email}", request.Email);
             throw new BadRequestException("Invalid email or password.");
         }
 
@@ -79,6 +85,11 @@ public class AuthService : IAuthService
         _unitOfWork.Users.Update(user);
         await _unitOfWork.SaveChangesAsync();
 
+        _logger.LogInformation(
+        "Login succeeded for user {UserId} with email {Email}",
+        user.Id,
+        user.Email);
+
         return new LoginResponseDto
         {
             AccessToken = accessToken,
@@ -98,11 +109,16 @@ public class AuthService : IAuthService
 
         if (refreshToken is null)
         {
+            _logger.LogWarning("Refresh token failed. Token not found.");
             throw new BadRequestException("Invalid refresh token.");
         }
 
         if (!refreshToken.IsActive)
         {
+            _logger.LogWarning(
+                                "Refresh token rejected for user {UserId}. Token inactive or already used.",
+                                refreshToken.UserId);
+
             throw new BadRequestException("Refresh token is no longer valid.");
         }
 
@@ -110,6 +126,10 @@ public class AuthService : IAuthService
 
         if (!user.IsActive)
         {
+            _logger.LogWarning(
+                                "Refresh token failed. Inactive account for user {UserId}",
+                                user.Id);
+
             throw new BadRequestException("This user account is inactive.");
         }
 
@@ -134,10 +154,12 @@ public class AuthService : IAuthService
             IsUsed = false
         };
 
-        _unitOfWork.RefreshTokens.Update(refreshToken);
         await _unitOfWork.RefreshTokens.AddAsync(newRefreshToken);
         await _unitOfWork.SaveChangesAsync();
 
+        _logger.LogInformation(
+                            "Refresh token succeeded for user {UserId}. Token rotation completed.",
+                            user.Id);
         return new LoginResponseDto
         {
             AccessToken = accessToken,
