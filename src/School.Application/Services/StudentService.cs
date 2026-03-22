@@ -7,6 +7,7 @@ using School.Application.Interfaces.Common;
 using School.Application.Interfaces.Repositories;
 using School.Application.Interfaces.Services;
 using School.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace School.Application.Services;
 
@@ -16,17 +17,20 @@ public class StudentService : IStudentService
     private readonly ICacheService _cacheService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IStudentAuthorizationService _studentAuthorizationService;
+    private readonly ILogger<StudentService> _logger;
 
     public StudentService(
         IUnitOfWork unitOfWork,
         ICacheService cacheService,
         ICurrentUserService currentUserService,
-        IStudentAuthorizationService studentAuthorizationService)
+        IStudentAuthorizationService studentAuthorizationService,
+        ILogger<StudentService> logger)
     {
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
         _currentUserService = currentUserService;
         _studentAuthorizationService = studentAuthorizationService;
+        _logger = logger;
     }
 
     public async Task<StudentDto> CreateAsync(CreateStudentDto dto)
@@ -64,6 +68,11 @@ public class StudentService : IStudentService
         await _unitOfWork.Students.AddAsync(student);
         await _unitOfWork.SaveChangesAsync();
         await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
+
+        _logger.LogInformation(
+                                "Student created successfully. StudentId: {StudentId}, OwnerUserId: {OwnerUserId}",
+                                student.Id,
+                                student.OwnerUserId);
 
         return MapToDto(student);
     }
@@ -208,6 +217,11 @@ public class StudentService : IStudentService
         await _cacheService.RemoveAsync(CacheKeys.StudentById(id));
         await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
 
+        _logger.LogInformation(
+                                "Student updated successfully. StudentId: {StudentId}, UpdatedBy: {UserId}",
+                                student.Id,
+                                _currentUserService.UserId);
+
         return MapToDto(student);
     }
 
@@ -234,9 +248,13 @@ public class StudentService : IStudentService
         await _unitOfWork.SaveChangesAsync();
         await _cacheService.RemoveAsync(CacheKeys.StudentById(id));
         await _cacheService.RemoveByPrefixAsync(CacheKeys.StudentsListPrefix);
+
+        _logger.LogInformation(
+                                "Student deactivated. StudentId: {StudentId}, RequestedBy: {UserId}",
+                                student.Id,
+                                _currentUserService.UserId);
     }
 
-   
     private static StudentDto MapToDto(Student student)
     {
         return new StudentDto

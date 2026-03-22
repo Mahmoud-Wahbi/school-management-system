@@ -1,4 +1,5 @@
-﻿using School.API.Common;
+﻿using Microsoft.Extensions.Logging;
+using School.API.Common;
 using School.Application.Exceptions;
 using System.Net;
 
@@ -25,14 +26,12 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception occurred.");
             await HandleExceptionAsync(context, ex);
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-
         var statusCode = exception switch
         {
             BadRequestException => (int)HttpStatusCode.BadRequest,
@@ -41,12 +40,27 @@ public class ExceptionHandlingMiddleware
             _ => (int)HttpStatusCode.InternalServerError
         };
 
+        var logLevel = exception switch
+        {
+            ForbiddenException => LogLevel.Warning,
+            NotFoundException => LogLevel.Warning,
+            BadRequestException => LogLevel.Warning,
+            _ => LogLevel.Error
+        };
+
+        _logger.Log(
+            logLevel,
+            exception,
+            "Exception occurred. Path: {Path}, Method: {Method}",
+            context.Request.Path,
+            context.Request.Method);
+
         var message = exception switch
         {
             BadRequestException => exception.Message,
             NotFoundException => exception.Message,
             ForbiddenException => exception.Message,
-            _ => "An unexpected error occurred."  
+            _ => "An unexpected error occurred."
         };
 
         context.Response.ContentType = "application/json";

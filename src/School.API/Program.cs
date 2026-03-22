@@ -7,8 +7,14 @@ using School.Application;
 using School.Infrastructure;
 using School.Infrastructure.Persistence.Context;
 using School.Infrastructure.Persistence.Seed;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -59,6 +65,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
