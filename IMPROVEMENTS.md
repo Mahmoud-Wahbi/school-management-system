@@ -23,15 +23,26 @@
 - [ ] Add Audit Log Table (track old/new values per change)
 - [ ] Add Soft Delete (DeletedAt + DeletedBy on BaseEntity)
 
-## 6. Future
+## 6. Logging
 
-- [ ] CORS (when Frontend is ready)
-- [ ] Rate Limiting
-- [ ] Refresh Tokens
+- [ ] Add Serilog DB sink to store logs in database
+- [ ] Add automated Logs table cleanup (retain last 30 days)
 
 ## 7. Security
 
+- [ ] Move SecretKey to Environment Variables (recommended for production)
+- [ ] Consider Azure Key Vault for enterprise-level secret management
 - [ ] Move Refresh Token from Body to HttpOnly Cookie
 - [ ] Hash Refresh Tokens before storing in DB
 - [ ] Add sliding expiration for Refresh Tokens
-- [ ] Add automated Logs table cleanup (retain last 30 days)
+- [ ] Add account lockout after failed login attempts
+- [ ] Use UserId claim instead of Identity.Name in rate limiter partition key
+
+## 8. Future
+
+- [ ] CORS (when Frontend is ready)
+
+## 9. Monitoring & Alerts
+- [ ] Add alert system for suspicious login attempts
+- [ ] Add alert for repeated rate limit violations
+- [ ] Add admin notifications for suspicious audit events

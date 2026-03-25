@@ -4,6 +4,7 @@ using School.Application.DTOs.Auth;
 using School.Application.Interfaces.Services;
 using School.API.Common;
 using School.Application.Interfaces.Common;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace School.API.Controllers;
 
@@ -23,6 +24,7 @@ public class AuthController : ControllerBase
         _currentUser = currentUser;
     }
 
+    [EnableRateLimiting("auth")]
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login([FromBody] LoginRequestDto request)
@@ -34,6 +36,7 @@ public class AuthController : ControllerBase
             "Login successful."));
     }
 
+    [EnableRateLimiting("auth")]
     [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<ApiResponse<LoginResponseDto>>> RefreshToken(
@@ -48,6 +51,7 @@ public class AuthController : ControllerBase
 
 
     [Authorize]
+    [EnableRateLimiting("default")]
     [HttpGet("me")]
     public IActionResult GetCurrentUser()
     {
