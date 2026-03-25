@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using School.API.Common;
 using School.Application.Common;
 using School.Application.DTOs.Students;
@@ -9,6 +10,7 @@ namespace School.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("default")]
 [Authorize] 
 public class StudentsController : ControllerBase
 {
